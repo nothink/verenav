@@ -1,0 +1,2 @@
+*/4 * * * *     /usr/sbin/logrotate -f /etc/logrotate.d/verenav.conf
+*/30 * * * *    /upload.sh
