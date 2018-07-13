@@ -30,9 +30,9 @@ do
     do
         aws s3 ls s3://${BUCKET}/${line} --endpoint-url=${ENDPOINT}
         if [[ $? -eq 0 ]]; then
-            echo 'skip: ' $line
+            : #echo 'skip: ' $line
         else
-            echo ' dl: ' $line
+            : #echo ' dl: ' $line
             wget -q -O $TMP --user-agent="$UA" $line
             if [ $? -eq 0 ]; then
                 aws s3 cp $TMP s3://${BUCKET}/${line} --acl public-read --endpoint-url=${ENDPOINT}
@@ -55,9 +55,9 @@ do
     do
         aws s3 ls s3://${BUCKET}/${line} --endpoint-url=${ENDPOINT}
         if [[ $? -eq 0 ]]; then
-            echo 'skip: ' $line
+            : #echo 'skip: ' $line
         else
-            echo ' dl: ' $line
+            : #echo ' dl: ' $line
             wget -q -O $TMP --user-agent="$UA" $line
             if [ $? -eq 0 ]; then
                 aws s3 cp $TMP s3://${BUCKET}/${line} --acl public-read --endpoint-url=${ENDPOINT}
