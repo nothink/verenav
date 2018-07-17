@@ -6,7 +6,7 @@ RUN mkdir /var/cache/nginx && \
     mkdir /verenav
 
 # install lua, lzlib, logrotate,
-RUN apk --update --no-cache add lua lua-lzlib logrotate procps bc python py-pip && \
+RUN apk --update --no-cache add lua lua-lzlib logrotate procps bc jq python py-pip && \
     pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir awscli
 

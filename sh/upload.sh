@@ -2,6 +2,7 @@
 
 UA="Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1"
 TMP='/tmpfile'
+EXISTS_LIST='/verenav/files'
 WORKDIR='/verenav/'
 BUCKET='verenav'
 ENDPOINT='https://s3.wasabisys.com'
@@ -21,19 +22,20 @@ if [ -e $TMP ]; then
     rm $TMP
 fi
 
-cd $WORKDIR
+# generate files list
+aws s3api list-objects --bucket ${BUCKET} --endpoint-url=${ENDPOINT} | jq ".Contents[].Key" | sed s/\"//g > ${EXISTS_LIST}
 
+cd $WORKDIR
 # stat100.log.*
 for file in $(find ./ -name 'stat100.log.*')
 do
-    cat $file | while read line || [ -n "$line" ]
+    cat $file | grep -v '^$' | sort | uniq | while read line || [ -n "$line" ]
     do
-        aws s3 ls s3://${BUCKET}/${line} --endpoint-url=${ENDPOINT}
-        if [[ $? -eq 0 ]]; then
+        if grep $line $EXISTS_LIST >/dev/null; then
             : #echo 'skip: ' $line
         else
             : #echo ' dl: ' $line
-            wget -q -O $TMP --user-agent="$UA" $line
+            wget -q -O $TMP -U "${UA}" $line
             if [ $? -eq 0 ]; then
                 aws s3 cp $TMP s3://${BUCKET}/${line} --acl public-read --endpoint-url=${ENDPOINT}
                 rm $TMP
@@ -41,10 +43,10 @@ do
         fi
     done
     rm $file
+    aws s3api list-objects --bucket ${BUCKET} --endpoint-url=${ENDPOINT} | jq ".Contents[].Key" | sed s/\"//g > ${EXISTS_LIST}
 done
 
 cd $WORKDIR
-
 # vcard.log.*
 for file in $(find ./ -name 'vcard.log.*')
 do
@@ -53,8 +55,7 @@ do
     sort | uniq | \
     while read line || [ -n "$line" ]
     do
-        aws s3 ls s3://${BUCKET}/${line} --endpoint-url=${ENDPOINT}
-        if [[ $? -eq 0 ]]; then
+        if grep $line $EXISTS_LIST >/dev/null; then
             : #echo 'skip: ' $line
         else
             : #echo ' dl: ' $line
@@ -66,6 +67,7 @@ do
         fi
     done
     rm $file
+    aws s3api list-objects --bucket ${BUCKET} --endpoint-url=${ENDPOINT} | jq ".Contents[].Key" | sed s/\"//g > ${EXISTS_LIST}
 done
 
 # delete PID file
