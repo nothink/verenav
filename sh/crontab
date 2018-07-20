@@ -1,2 +1,2 @@
 */4 * * * *     /usr/sbin/logrotate -f /etc/logrotate.d/verenav.conf
-*/15 * * * *    /upload.sh
+*/15 * * * *    nice -n 15 /upload.sh
