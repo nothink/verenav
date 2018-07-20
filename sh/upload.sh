@@ -50,7 +50,7 @@ cd $WORKDIR
 # vcard.log.*
 for file in $(find ./ -name 'vcard.log.*')
 do
-    cat $file | \
+    cat $file | sed -e s/\\\\\\//\\//g | \
     grep -o -e 'c.stat100.ameba.jp/vcard/[-a-zA-Z0-9/._+]*\.[a-zA-Z0-9]\+\|stat100.ameba.jp/vcard/[-a-zA-Z0-9/._+]*.[a-z]*\.[a-zA-Z0-9]\+' | \
     sort | uniq | \
     while read line || [ -n "$line" ]
