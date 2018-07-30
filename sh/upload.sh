@@ -11,67 +11,79 @@ PID=/var/tmp/upload.pid
 
 # check PID file & create
 if [ -f ${PID} ]; then
-    echo "double check: " ${PID}
+    : # echo "double check: " ${PID}
     exit
 else
     echo $$ > ${PID}
 fi
-
 # remove tmp file if exists
-if [ -e $TMP ]; then
-    rm $TMP
+if [ -f ${TMP} ]; then
+    rm ${TMP}
+fi
+# generate files list
+if [ ! -f ${EXISTS_LIST} ]; then
+    : # echo '[init] generating file list...'
+    aws s3api list-objects --bucket ${BUCKET} --endpoint-url=${ENDPOINT} | \
+    jq ".Contents[].Key" | \
+    sed s/\"//g > ${EXISTS_LIST}
 fi
 
-# generate files list
-aws s3api list-objects --bucket ${BUCKET} --endpoint-url=${ENDPOINT} | jq ".Contents[].Key" | sed s/\"//g > ${EXISTS_LIST}
-
-cd $WORKDIR
+# ------------------------------------------------------------------------------
 # stat100.log.*
-for file in $(find ./ -name 'stat100.log.*')
-do
-    cat $file | grep -v '^$' | sort | uniq | while read line || [ -n "$line" ]
-    do
-        if grep $line $EXISTS_LIST >/dev/null; then
-            : #echo 'skip: ' $line
-        else
-            : #echo ' dl: ' $line
-            wget -q -O $TMP -U "${UA}" $line
-            if [ $? -eq 0 ]; then
-                aws s3 cp $TMP s3://${BUCKET}/${line} --acl public-read --endpoint-url=${ENDPOINT}
-                rm $TMP
-            fi
-        fi
-    done
-    rm $file
-    aws s3api list-objects --bucket ${BUCKET} --endpoint-url=${ENDPOINT} | jq ".Contents[].Key" | sed s/\"//g > ${EXISTS_LIST}
-done
+stat100s=$(find ${WORKDIR} -name 'stat100.log.*')
 
-cd $WORKDIR
-# vcard.log.*
-for file in $(find ./ -name 'vcard.log.*')
-do
-    cat $file | sed -e s/\\\\\\//\\//g | \
-    grep -o -e 'c.stat100.ameba.jp/vcard/[-a-zA-Z0-9/._+]*\.[a-zA-Z0-9]\+\|stat100.ameba.jp/vcard/[-a-zA-Z0-9/._+]*.[a-z]*\.[a-zA-Z0-9]\+' | \
-    sort | uniq | \
-    while read line || [ -n "$line" ]
+if [ -n "${stat100s}" ]; then
+    cat ${stat100s} | \
+    grep -v '^$' | sort | uniq | \
+    while read line || [ -n "${line}" ]
     do
-        if grep $line $EXISTS_LIST >/dev/null; then
-            : #echo 'skip: ' $line
+        if grep ${line} ${EXISTS_LIST} >/dev/null; then
+            : # echo '[stat100] skip: ' ${line}
         else
-            : #echo ' dl: ' $line
-            wget -q -O $TMP --user-agent="$UA" $line
+            : # echo '[stat100] dl  : ' ${line}
+            wget -q -O ${TMP} -U "${UA}" ${line}
             if [ $? -eq 0 ]; then
-                aws s3 cp $TMP s3://${BUCKET}/${line} --acl public-read --endpoint-url=${ENDPOINT}
-                rm $TMP
+                : # echo '[stat100] upload... '
+                aws s3 cp ${TMP} s3://${BUCKET}/${line} --acl public-read --endpoint-url=${ENDPOINT}
+                rm ${TMP}
             fi
         fi
     done
-    rm $file
-    aws s3api list-objects --bucket ${BUCKET} --endpoint-url=${ENDPOINT} | jq ".Contents[].Key" | sed s/\"//g > ${EXISTS_LIST}
-done
+    rm ${stat100s}
+fi
+# ------------------------------------------------------------------------------
+# vcard.log.*
+vcards=$(find ${WORKDIR} -name 'vcard.log.*')
+
+if [ -n "${vcards}" ]; then
+    cat ${vcards} | \
+    sed -e s/\\\\\\//\\//g | \
+    grep -o -e 'c.stat100.ameba.jp/vcard/[-a-zA-Z0-9/._+]*\.[a-zA-Z0-9]\+\|stat100.ameba.jp/vcard/[-a-zA-Z0-9/._+]*.[a-z]*\.[a-zA-Z0-9]\+' | \
+    grep -v '^$' | sort | uniq | \
+    while read line || [ -n "${line}" ]
+    do
+        if grep ${line} ${EXISTS_LIST} >/dev/null; then
+            : # echo '[vcard] skip: ' ${line}
+        else
+            : # echo '[vcard] dl  : ' ${line}
+            wget -q -O ${TMP} --user-agent="${UA}" ${line}
+            if [ $? -eq 0 ]; then
+                : # echo '[vcard] upload... '
+                aws s3 cp ${TMP} s3://${BUCKET}/${line} --acl public-read --endpoint-url=${ENDPOINT}
+                rm ${TMP}
+            fi
+        fi
+    done
+    rm ${vcards}
+fi
+# ------------------------------------------------------------------------------
+: # echo 'updating file list...'
+aws s3api list-objects --bucket ${BUCKET} --endpoint-url=${ENDPOINT} | \
+jq ".Contents[].Key" | \
+sed s/\"//g > ${EXISTS_LIST}
 
 # delete PID file
 rm ${PID}
 
-# reboot workers
+# send HUP to reboot nginx workers
 [ ! -f /var/run/nginx.pid ] || kill -HUP `cat /usr/local/openresty/nginx/logs/nginx.pid`
