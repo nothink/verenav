@@ -82,7 +82,7 @@ aws s3api list-objects --bucket ${BUCKET} --endpoint-url=${ENDPOINT} | \
 jq ".Contents[].Key" | \
 sed s/\"//g > ${EXISTS_LIST}
 
-aws s3 cp ${EXISTS_LIST} s3://${BUCKET}/${EXISTS_LIST} --acl public-read --endpoint-url=${ENDPOINT}
+aws s3 cp ${EXISTS_LIST} s3://${BUCKET}/files --acl public-read --endpoint-url=${ENDPOINT}
 
 # delete PID file
 rm ${PID}
