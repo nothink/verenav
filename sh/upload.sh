@@ -3,6 +3,7 @@
 UA="Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1"
 TMP='/tmpfile'
 EXISTS_LIST='/verenav/files'
+EXISTS_LIST_TMP='/tmp/files'
 WORKDIR='/verenav/'
 BUCKET='verenav'
 ENDPOINT='https://s3.wasabisys.com'
@@ -20,12 +21,12 @@ fi
 if [ -f ${TMP} ]; then
     rm ${TMP}
 fi
-# generate files list
+# generate files list if not exists
 if [ ! -f ${EXISTS_LIST} ]; then
     : # echo '[init] generating file list...'
     aws s3api list-objects --bucket ${BUCKET} --endpoint-url=${ENDPOINT} | \
     jq ".Contents[].Key" | \
-    sed s/\"//g > ${EXISTS_LIST}
+    sed "s/\"//g" | sed "/^\/verenav\/files$/d" > ${EXISTS_LIST}
 fi
 
 # ------------------------------------------------------------------------------
@@ -80,9 +81,15 @@ fi
 : # echo 'updating file list...'
 aws s3api list-objects --bucket ${BUCKET} --endpoint-url=${ENDPOINT} | \
 jq ".Contents[].Key" | \
-sed s/\"//g > ${EXISTS_LIST}
+sed "s/\"//g" | sed "/^\/verenav\/files$/d" > ${EXISTS_LIST_TMP}
 
-aws s3 cp ${EXISTS_LIST} s3://${BUCKET}/files --acl public-read --endpoint-url=${ENDPOINT}
+diff ${EXISTS_LIST_TMP} ${EXISTS_LIST} > /dev/null 2>&1
+if [ $? -eq 1 ]; then
+    cp -f ${EXISTS_LIST_TMP} ${EXISTS_LIST}
+    aws s3 cp ${EXISTS_LIST} s3://${BUCKET}/files --acl public-read --endpoint-url=${ENDPOINT}
+fi
+
+rm -f ${EXISTS_LIST_TMP}
 
 # delete PID file
 rm ${PID}
