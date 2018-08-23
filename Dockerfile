@@ -29,7 +29,10 @@ RUN mv /crontab  /var/spool/cron/crontabs/root
 
 CMD ["/entry.sh"]
 
-# FROM ubuntu:cosmic
+
+
+
+# FROM ubuntu:trusty
 #
 # WORKDIR /verenav
 #
@@ -37,14 +40,38 @@ CMD ["/entry.sh"]
 #     apt-get install -y git wget && \
 #     apt-get autoclean && apt-get autoremove
 #
-# RUN apt-get install -y gcc make libpcre3 zlib1g libpcre3-dev zlib1g-dev lua5.1 lua5.1-dev lua-zlib logrotate
+# RUN apt-get install -y gcc make libpcre3 zlib1g libpcre3-dev zlib1g-dev logrotate
 #
 # RUN cd /verenav && \
-#     wget http://nginx.org/download/nginx-1.15.2.tar.gz && \
-#     tar zxf nginx-1.15.2.tar.gz && \
-#     git clone https://github.com/chobits/ngx_http_proxy_connect_module && \
-#     git clone https://github.com/openresty/lua-nginx-module && \
-#     cd /verenav/nginx-1.15.2 && \
-#     patch -p1 < ../ngx_http_proxy_connect_module/patch/proxy_connect_rewrite_1015.patch && \
-#     ./configure --add-module=/verenav/ngx_http_proxy_connect_module --add-module=/verenav/lua-nginx-module && \
-#     make && make install
+#     wget http://luajit.org/download/LuaJIT-2.1.0-beta3.tar.gz && \
+#     tar zxf LuaJIT-2.1.0-beta3.tar.gz && \
+#     cd LuaJIT-2.1.0-beta3 && make && make install && \
+#     cd ../ && rm -rf LuaJIT-2.1.0-beta3 && rm -f LuaJIT-2.1.0-beta3.tar.gz
+#
+# RUN cd /verenav && \
+#     wget https://github.com/openresty/lua-nginx-module/archive/v0.10.13.tar.gz && \
+#     tar zxf v0.10.13.tar.gz && \
+#     rm -f v0.10.13.tar.gz && \
+#     wget https://github.com/simplresty/ngx_devel_kit/archive/v0.3.0.tar.gz && \
+#     tar zxf v0.3.0.tar.gz && \
+#     rm -f v0.3.0.tar.gz
+#
+# RUN cd /verenav && \
+#     wget http://nginx.org/download/nginx-1.13.6.tar.gz && \
+#     tar zxf nginx-1.13.6.tar.gz && \
+#     rm -f nginx-1.13.6.tar.gz
+#
+# #    git clone https://github.com/chobits/ngx_http_proxy_connect_module && \
+# #    patch -p1 < ../ngx_http_proxy_connect_module/patch/proxy_connect_rewrite_1015.patch && \
+#
+#
+# RUN cd /verenav/nginx-1.13.6 && \
+# #    ./configure --add-module=/verenav/ngx_http_proxy_connect_module --add-module=/verenav/lua-nginx-module && \
+#     export LUAJIT_LIB=/usr/local/lib && \
+#     export LUAJIT_INC=/usr/local/include/luajit-2.1 && \
+#     ./configure --prefix=/opt/nginx \
+#         --with-ld-opt="-Wl,-rpath,/usr/local/lib" \
+#         --add-module=/verenav/ngx_devel_kit-0.3.0 \
+#         --add-module=/verenav/lua-nginx-module-0.10.13
+#
+# # RUN make && make install
