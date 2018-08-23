@@ -59,7 +59,7 @@ vcards=$(find ${WORKDIR} -name 'vcard.log.*')
 if [ -n "${vcards}" ]; then
     cat ${vcards} | \
     sed -e s/\\\\\\//\\//g | \
-    grep -o -e 'c.stat100.ameba.jp/vcard/[-a-zA-Z0-9/._+]*\.[a-zA-Z0-9]\+\|stat100.ameba.jp/vcard/[-a-zA-Z0-9/._+]*.[a-z]*\.[a-zA-Z0-9]\+' | \
+    grep -o -e 'https\?://\(c.\)\?stat100.ameba.jp/vcard/[-a-zA-Z0-9/._+]*\.[a-zA-Z0-9]\+' | \
     grep -v '^$' | sort | uniq | \
     while read line || [ -n "${line}" ]
     do
