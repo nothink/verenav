@@ -42,7 +42,7 @@ if [ -n "${stat100s}" ]; then
             : # echo '[stat100] skip: ' ${line}
         else
             : # echo '[stat100] dl  : ' ${line}
-            wget -q -O ${TMP} -U "${UA}" ${line}
+            wget -q -O ${TMP} -U "${UA}" https://${line}
             if [ $? -eq 0 ]; then
                 : # echo '[stat100] upload... '
                 aws s3 cp ${TMP} s3://${BUCKET}/${line} --acl public-read --endpoint-url=${ENDPOINT}
@@ -59,7 +59,7 @@ vcards=$(find ${WORKDIR} -name 'vcard.log.*')
 if [ -n "${vcards}" ]; then
     cat ${vcards} | \
     sed -e s/\\\\\\//\\//g | \
-    grep -o -e 'https\?://\(c.\)\?stat100.ameba.jp/vcard/[-a-zA-Z0-9/._+]*\.[a-zA-Z0-9]\+' | \
+    grep -o -e '\(c.\)\?stat100.ameba.jp/vcard/[-a-zA-Z0-9/._+]*\.[a-zA-Z0-9]\+' | \
     grep -v '^$' | sort | uniq | \
     while read line || [ -n "${line}" ]
     do
@@ -67,7 +67,7 @@ if [ -n "${vcards}" ]; then
             : # echo '[vcard] skip: ' ${line}
         else
             : # echo '[vcard] dl  : ' ${line}
-            wget -q -O ${TMP} --user-agent="${UA}" ${line}
+            wget -q -O ${TMP} -U "${UA}" https://${line}
             if [ $? -eq 0 ]; then
                 : # echo '[vcard] upload... '
                 aws s3 cp ${TMP} s3://${BUCKET}/${line} --acl public-read --endpoint-url=${ENDPOINT}
