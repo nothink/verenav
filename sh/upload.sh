@@ -8,7 +8,7 @@ WORKDIR='/verenav/'
 BUCKET='verenav'
 ENDPOINT='https://s3.wasabisys.com'
 
-PID=tmp/upload.pid
+PID=/var/tmp/upload.pid
 
 # check PID file & create
 if [ -f ${PID} ]; then
