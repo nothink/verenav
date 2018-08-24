@@ -8,7 +8,7 @@ WORKDIR='/verenav/'
 BUCKET='verenav'
 ENDPOINT='https://s3.wasabisys.com'
 
-PID=/var/tmp/upload.pid
+PID=tmp/upload.pid
 
 # check PID file & create
 if [ -f ${PID} ]; then
@@ -95,4 +95,4 @@ rm -f ${EXISTS_LIST_TMP}
 rm ${PID}
 
 # send HUP to reboot nginx workers
-[ ! -f /var/run/nginx.pid ] || kill -HUP `cat /usr/local/openresty/nginx/logs/nginx.pid`
+[ ! -f /opt/nginx/logs/nginx.pid ] || kill -HUP `cat /opt/nginx/logs/nginx.pid`
