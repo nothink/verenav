@@ -14,6 +14,9 @@ user_agent = 'Mozilla/5.0 '
 'AppleWebKit/605.1.15 (KHTML, like Gecko) '
 'Version/12.0 Mobile/15E148 Safari/604.1'
 
+MAX_WORKERS = 48
+MAX_FUTURES = 24
+
 
 def fetch(object, session):
     keys = object.get()['Body'].read().decode('utf-8').splitlines()
@@ -22,7 +25,7 @@ def fetch(object, session):
             continue
         elif 'text_nyuudankouka.png' in key:
             continue
-        elif 'balloon_subpetitgirls.png' in key:
+        elif 'balloon_subpetitgirls.png' in key.lower():
             continue
         # temporary fix
         key = key.replace('//', '/')
@@ -68,14 +71,22 @@ async def main():
         session.headers.update({'User-Agent': user_agent})
 
         loop = asyncio.get_event_loop()
+        futures = []
 
-        with ThreadPoolExecutor(max_workers=32) as executor:
+        with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
             for summary in humi.objects.all():
                 obj = s3.Object('humi-bookmark', summary.key)
                 # call fetch(obj, session) using executor
-                future = loop.run_in_executor(executor, fetch, obj, session)
+                futures.append(
+                    loop.run_in_executor(executor, fetch, obj, session)
+                )
+                # waiting all futures if len(futures) > MAX_FUTURES
+                if len(futures) > MAX_FUTURES:
+                    while len(futures) > 0:
+                        future = futures.pop()
+                        resp = await future
     finally:
-        # remove PID file
+        # # remove PID file
         # sys.stdout.write('Unlink PID file.\n')
         # sys.stdout.flush()
         os.unlink(pid_path)
