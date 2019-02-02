@@ -14,12 +14,18 @@ user_agent = 'Mozilla/5.0 '
 'AppleWebKit/605.1.15 (KHTML, like Gecko) '
 'Version/12.0 Mobile/15E148 Safari/604.1'
 
-MAX_WORKERS = 48
-MAX_FUTURES = 24
+MAX_WORKERS = 24
+MAX_FUTURES = 12
 
 
 def fetch(object, session):
-    keys = object.get()['Body'].read().decode('utf-8').splitlines()
+    try:
+        keys = object.get()['Body'].read().decode('utf-8').splitlines()
+    except Exception as e:
+        sys.stdout.write("[skip] " + object.key + ': ' + str(e) + '\n')
+        sys.stdout.flush()
+        return
+
     for key in keys:
         if 'mypage.build' in key:
             continue
@@ -46,8 +52,8 @@ def fetch(object, session):
                 sys.stdout.write("[FAILED] " + key + '\n')
                 sys.stdout.flush()
 
-    # sys.stdout.write("[remove] " + object.key + '\n')
-    # sys.stdout.flush()
+    sys.stdout.write("[remove] " + object.key + '\n')
+    sys.stdout.flush()
     object.delete()
 
 
